@@ -1,0 +1,18 @@
+<?php
+
+use think\migration\db\Column;
+use think\migration\Migrator;
+
+class CreateFailedJobsTable extends Migrator
+{
+    public function change()
+    {
+        $this->table('{{table}}')
+            ->addColumn('connection', 'string', array('limit' => 32, 'default' => ''))
+            ->addColumn('queue', 'string', array('limit' => 32, 'default' => ''))
+            ->addColumn('payload', 'text', array('limit' => 0))
+            ->addColumn('exception', 'text', array('limit' => 0))
+            ->addColumn('fail_time', 'datetime', array('limit' => 0, 'default' => 'CURRENT_TIMESTAMP'))
+            ->create();
+    }
+}

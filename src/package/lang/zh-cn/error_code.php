@@ -1,0 +1,37 @@
+<?php
+
+return array(
+    'error_code' => array(
+        // 通用的错误码
+        'SUCCESS'                         => '0',
+        'INTERNAL_SERVER_ERROR'           => '10000',
+        'NO_OPERATION_DATA'               => '10001',
+        'TOKEN_NO_EMPTY'                  => '10002',
+        'INVALID_TOKEN'                   => '10003',
+        'REQUEST_TYPE_ERROR'              => '10004',
+        'MUST_NUMBER_TYPE'                => '10005',
+        'VENDOR_FILE_NOT_EXISTS'          => '10006',
+        'DO_NOT_REPEAT'                   => '10007',
+        'VALIDATE_CLASS_NOT_EXISTS'       => '10008',
+        'SIGN_REQUIRE'                    => '10009',
+        'SIGN_LENGTH_ERROR'               => '10010',
+        'TIMESTAMP_REQUIRE'               => '10011',
+        'TIMESTAMP_TYPE_FAIL'             => '10012',
+        'NONCE_REQUIRE'                   => '10013',
+        'NONCE_LENGTH_ERROR'              => '10014',
+        'NONCE_TYPE_FAIL'                 => '10015',
+        'TIMESTAMP_EXPIRE'                => '10016',
+        'NONCE_ALREADY_EXISTS'            => '10017',
+        'SIGN_ERROR'                      => '10018',
+        'PARAM_ERROR'                     => '10019',
+        'VERIFY_METHOD_CONFIG_NOT_EXISTS' => '10020',
+        'VERIFY_ROOT_NOT_EXISTS'          => '10021',
+        'VERIFY_CONTROLLER_NOT_EXISTS'    => '10022',
+        'VERIFY_METHOD_NOT_EXISTS'        => '10023',
+        'BLOOM_FILTER_KEY_REQUIRE'        => '10024',
+        'BLOOM_FILTER_FUNC_REQUIRE'       => '10025',
+        'BLOOM_FILTER_FUNC_TOO_FEW'       => '10026',
+        'TOKEN_BUCKET_KEY_REQUIRE'        => '10027',
+        'MUST_INTEGER_TYPE'               => '10028',
+    ),
+);

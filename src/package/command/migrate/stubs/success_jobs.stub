@@ -1,0 +1,18 @@
+<?php
+
+use think\migration\db\Column;
+use think\migration\Migrator;
+
+class CreateSuccessJobsTable extends Migrator
+{
+    public function change()
+    {
+        $this->table('{{table}}')
+            ->addColumn('job_id', 'string', array('limit' => 64, 'default' => '', 'comment' => '队列id'))
+            ->addColumn('connection', 'string', array('limit' => 16, 'default' => '', 'comment' => '队列的方式 redis 或 database'))
+            ->addColumn('queue', 'string', array('limit' => 32, 'default' => '', 'comment' => '队列名称'))
+            ->addColumn('payload', 'text', array('limit' => 0, 'comment' => '队列参数'))
+            ->addColumn('create_time', 'datetime', array('limit' => 0, 'default' => 'CURRENT_TIMESTAMP'))
+            ->create();
+    }
+}
