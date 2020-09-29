@@ -170,16 +170,16 @@ $ php think migrate:run
 项目
 ├─ app
 │  └─ 应用名
-│		├─ config
-│	   	│	└─ verify_method.php 验证配置
-│		│
-│		├─ controller
-│		│	└─ index
-│		│		└─ User.php 
-│		│
-│		└─ validate
-│			└─ index
-│				└─ UserValidate.php 验证类明明规则(控制器名 + Validate) 
+│       ├─ config
+│       │   └─ verify_method.php 验证配置
+│       │
+│       ├─ controller
+│       │   └─ index
+│       │       └─ User.php 
+│       │
+│       └─ validate
+│           └─ index
+│               └─ UserValidate.php 验证类明明规则(控制器名 + Validate) 
 ├─ config
 ├─ extend
 ├─ public
@@ -270,9 +270,9 @@ class UserValidate extends \think\Validate
 ├─ app
 │  └─ 应用名
 │      └─ lang
-│			└─ zh-cn
-│				├─ error_code.php 错误码
-│      			└─ error_message.php 错误信息	
+│          └─ zh-cn
+│               ├─ error_code.php 错误码
+│               └─ error_message.php 错误信息
 │    
 ├─ config
 ├─ extend
