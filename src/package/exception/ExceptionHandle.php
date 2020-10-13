@@ -32,15 +32,13 @@ class ExceptionHandle extends Handle
      */
     public function render($request, Throwable $e): Response
     {
-        $this->app->response->inTransaction(false); // 事务操作
-
         // 调试模式
         if ($this->app->var->isDebug)
         {
             return parent::render($request, $e);
         }
 
-        $this->http_code = $this->app->config->get('tp-common.error_http_code') ?? 500;
+        $this->http_code = $this->app->config->get('tp-common.http_code', 500);
 
         // 异常处理
         // InvalidArgumentException extends LogicException
@@ -68,13 +66,13 @@ class ExceptionHandle extends Handle
             // db 类的异常需要记录错误的操作内容
             $this->app->response->setException('DbException', $e->getData());
         }
-        $this->app->response->setException('Exception', $e->getMessage()); // 异常消息内容
-        $this->app->response->setException('Code', $e->getCode()); // 异常代码
-        $this->app->response->setException('File', $e->getFile()); // 创建异常时的程序文件名称
-        $this->app->response->setException('Line', $e->getLine()); // 获取创建的异常所在文件中的行号
 
-        $this->app->response->setHttpCode($this->http_code);
-        return $this->app->response->exceptionReturn($e);
+        return $this->app->response->setException('Exception', $e->getMessage()) // 异常消息内容
+            ->setException('Code', $e->getCode()) // 异常代码
+            ->setException('File', $e->getFile()) // 创建异常时的程序文件名称
+            ->setException('Line', $e->getLine()) // 获取创建的异常所在文件中的行号
+            ->setHttpCode($this->http_code) // 设置 http 状态码
+            ->exceptionReturn($e); // 异常响应
     }
 
     /**

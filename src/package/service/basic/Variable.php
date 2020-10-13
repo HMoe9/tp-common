@@ -5,6 +5,12 @@ namespace tp\common\package\service\basic;
 
 class Variable
 {
+    /**
+     * 批量日志
+     * @var array
+     */
+    public $batch_log = array();
+
     public function __set($name, $value)
     {
         $this->$name = $value;

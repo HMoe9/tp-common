@@ -29,19 +29,10 @@ class Log implements LogContract
     protected $log_write = true;
 
     /**
-     * 是否批量记录
-     * @var bool
-     */
-    protected $batch_write = false;
-
-    /**
-     * 批量记录数据集
+     * 响应日志结构
      * @var array
      */
-    protected $batch_data = array(
-        'action_log' => array(),
-        'error_log' => array(),
-    );
+    protected $response_schema = array();
 
     /**
      * 设置日志记录标识
@@ -54,13 +45,24 @@ class Log implements LogContract
     }
 
     /**
-     * 设置批量记录标识
+     * 设置响应日志结构
      * @author HMoe9 <hmoe9@qq.com>
-     * @param bool $bool
+     * @param array $response_schema
      */
-    public function setBatchWrite(bool $bool = true): void
+    public function setResponseSchema(array $response_schema): void
     {
-        $this->batch_write = $bool;
+        $this->response_schema = $response_schema;
+    }
+
+    /**
+     * 设置响应日志结构字段
+     * @author HMoe9 <hmoe9@qq.com>
+     * @param string $key
+     * @param array $value
+     */
+    public function setResponseSchemaField(string $key, array $value): void
+    {
+        $this->response_schema[$key] = $value;
     }
 
     public function __call($method, $args): void
@@ -83,14 +85,6 @@ class Log implements LogContract
         }
 
         // #1.2--- 日志记录
-        if (count($args) == 0)
-        {
-            $args = array('UNKNOWN ACTION', array());
-        }
-        elseif (count($args) == 1)
-        {
-            $args[] = array();
-        }
         $this->write($method, $args);
     }
 
@@ -102,77 +96,52 @@ class Log implements LogContract
      */
     public function write($method, $args): void
     {
-        list($action, $content) = $args;
+        list($action) = $args;
 
         // 请求响应时间
-        if (!empty($this->time))
-        {
-            $response_time = (microtime(true) - $this->time) * 1000;
-        }
+        $response_time = (microtime(true) - $this->time) * 1000;
 
         // 内存使用量
         $memory_usage = memory_get_usage() - $this->app->getBeginMem();
 
         $ins_data = array(
             'node' => $this->request->baseUrl(),
-            'ip' => $this->request->ip(),
             'action' => $action,
-            'content' => $this->secretHandle($content),
+            'remote_ip' => $this->request->ip(),
             'response_time' => $response_time,
             'memory_usage' => $memory_usage,
         );
-        if ($this->batch_write === false)
-        {
-            $model = self::BIND_MODEL[$method];
-            $model::create($ins_data);
-        }
-        else
-        {
-            $this->batch_data[$method][] = $ins_data;
-        }
+        $this->logHandle($ins_data);
+        $model = self::BIND_MODEL[$method];
+        $model::create($ins_data);
     }
 
     /**
-     * 批量记录
+     * 处理日志数据
      * @author HMoe9 <hmoe9@qq.com>
+     * @param array $log
      */
-    public function batchWrite(): void
+    protected function logHandle(array &$log): void
     {
-        if ($this->log_write === false ||
-            $this->batch_write === false)
-        {
-            return ;
-        }
+        $log['server'] = array_change_key_case($this->request->server());
+        $log['server'] = json_encode($log['server'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-        foreach ($this->batch_data as $key => $value)
+        $log['request'] = array(
+            'param' => $this->request->param(),
+            'header' => $this->request->header(),
+        );
+
+        // 指定字段过滤,不记录日志
+        $filter_field = $this->app->config->get('tp-common.log_filter_field', []);
+        if (!empty($filter_field) && is_array($filter_field))
         {
-            if (empty($value))
+            foreach ($filter_field as $value)
             {
-                continue ;
+                isset($log['request']['param'][$value]) && $log['request']['param'][$value] = '';
             }
-            $model = self::BIND_MODEL[$key];
-            $class = $this->app->make($model);
-            $class->saveAll($value);
         }
-    }
+        $log['request'] = json_encode($log['request'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-    /**
-     * 处理 param 字段中可能存在的用户密码字段
-     * @author HMoe9 <hmoe9@qq.com>
-     * @param $content
-     * @return string
-     */
-    protected function secretHandle($content): string
-    {
-        $content_origin = $content;
-        $content = is_array($content) ? $content : json_decode(strval($content), true);
-        if ((!is_array($content) && json_last_error() !== JSON_ERROR_NONE) ||
-            (is_numeric($content)))
-        {
-            return is_numeric($content_origin) ? strval($content_origin) : $content_origin;
-        }
-
-        isset($content['param']['password']) && $content['param']['password'] = '';
-        return json_encode($content, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $log['response'] = json_encode($this->response_schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 }

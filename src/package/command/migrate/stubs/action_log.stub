@@ -9,9 +9,10 @@ class CreateActionLogTable extends Migrator
     {
         $this->table('{{table}}')
             ->addColumn('node', 'string', array('limit' => 64, 'default' => '', 'comment' => '当前操作节点'))
-            ->addColumn('ip', 'string', array('limit' => 16, 'default' => '', 'comment' => '操作者IP地址'))
             ->addColumn('action', 'string', array('limit' => 32, 'default' => '', 'comment' => '操作行为名称'))
-            ->addColumn('content', 'text', array('limit' => 0, 'comment' => '操作内容描述'))
+            ->addColumn('remote_ip', 'string', array('limit' => 16, 'default' => '', 'comment' => '操作者IP地址'))
+            ->addColumn('request', 'text', array('limit' => 0, 'comment' => '请求头,请求数据'))
+            ->addColumn('response', 'text', array('limit' => 0, 'comment' => '响应头,响应数据,响应状态码'))
             ->addColumn('response_time', 'integer', array('limit' => 10, 'signed' => false, 'default' => 0, 'comment' => '请求响应时间 (ms)'))
             ->addColumn('memory_usage', 'integer', array('limit' => 10, 'signed' => false, 'default' => 0, 'comment' => '内存使用量 (byte)'))
             ->addColumn('create_time', 'datetime', array('limit' => 0, 'default' => 'CURRENT_TIMESTAMP'))

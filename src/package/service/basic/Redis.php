@@ -18,12 +18,13 @@ class Redis
 
     protected function initialize()
     {
+        $env = $this->app->env;
         $options = array(
-            'host' => $this->app->env->get('redis.host', '127.0.0.1'),
-            'port' => $this->app->env->get('redis.port', 6379),
-            'password' => $this->app->env->get('redis.password', ''),
-            'timeout' => $this->app->env->get('redis.timeout', 0),
-            'select' => $this->app->env->get('redis.select', 0),
+            'host' => $env->get('redis.host', '127.0.0.1'),
+            'port' => $env->get('redis.port', 6379),
+            'password' => $env->get('redis.password', ''),
+            'timeout' => $env->get('redis.timeout', 0),
+            'select' => $env->get('redis.select', 0),
         );
         $this->redis = new BaseRedis($options);
     }

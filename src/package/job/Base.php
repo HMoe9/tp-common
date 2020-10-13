@@ -66,9 +66,9 @@ class Base
         );
         FailedJobsModel::create($ins_data);
 
-        if (!empty($this->app->var->error_log))
+        if (!empty($this->app->var->batch_log))
         {
-            $this->app->response->errorLogWrite($exception['Exception'], $exception);
+            $this->app->response->LogWrite($exception['Exception']);
         }
     }
 }

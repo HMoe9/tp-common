@@ -32,23 +32,35 @@ class Response implements ResponseContract
     protected $exception = array();
 
     /**
+     * 日志类型
+     * false: error_log
+     * true: action_log
+     * @var bool
+     */
+    protected $log_type = false;
+
+    /**
      * 设置 http 状态码
      * @author HMoe9 <hmoe9@qq.com>
      * @param int $http_code
+     * @return $this
      */
-    public function setHttpCode(int $http_code): void
+    public function setHttpCode(int $http_code)
     {
         $this->http_code = $http_code;
+        return $this;
     }
 
     /**
      * 设置返回的 data 内容
      * @author HMoe9 <hmoe9@qq.com>
      * @param array $data
+     * @return $this
      */
-    public function setData($data = array()): void
+    public function setData($data = array())
     {
         $this->data = $data;
+        return $this;
     }
 
     /**
@@ -56,14 +68,16 @@ class Response implements ResponseContract
      * @author HMoe9 <hmoe9@qq.com>
      * @param string $key
      * @param $value
+     * @return $this
      */
-    public function setException(string $key, $value): void
+    public function setException(string $key, $value)
     {
         $this->exception[$key] = $value;
+        return $this;
     }
 
     /**
-     * ajax 统一响应方法
+     * ajax 响应方法
      * @author HMoe9 <hmoe9@qq.com>
      * @param string $msg
      * @param string $behavior
@@ -73,24 +87,14 @@ class Response implements ResponseContract
     {
         $error_code = $this->app->exception->getCode($msg); // 错误码
         $error_msg = $this->app->exception->getMessage($error_code); // 错误信息
-        $log = array(
-            'data' => $this->data,
-            'param' => $this->param,
-        );
 
         // 默认使用错误码里的信息,如果有自定义行为名称使用自定义
         $error_msg = empty($behavior) ? $error_msg : $behavior;
         if ($error_code == '0')
         {
-            $this->inTransaction(true); // 事务操作
-            $this->app->system_log->action_log($error_msg, $log);
-            return $this->success($error_msg);
+            $this->log_type = true;
         }
-        else
-        {
-            $this->errorLogWrite($error_msg, $log);
-            return $this->result($error_code, $error_msg);
-        }
+        return $this->result($error_code, $error_msg);
     }
 
     /**
@@ -102,8 +106,6 @@ class Response implements ResponseContract
      */
     public function warningReturn(string $msg = 'INTERNAL_SERVER_ERROR', array $data = array()): ThinkResponse
     {
-        $this->inTransaction(false); // 事务操作
-
         // 查询响应的错误信息
         $error_msg = $this->app->exception->getMessage($msg);
         $this->data = array(
@@ -111,14 +113,9 @@ class Response implements ResponseContract
         );
         empty($data) || $this->data = array_merge($this->data, $data);
 
-        $log = array(
-            'data' => $this->data,
-            'param' => $this->param,
-        );
-        $this->errorLogWrite($error_msg, $log);
-
-        $error_msg = $this->app->exception->getMessage('SUCCESS');
-        return $this->success($error_msg);
+        $error_code = $this->app->exception->getCode('SUCCESS');
+        $error_msg = $this->app->exception->getMessage($error_code);
+        return $this->result($error_code, $error_msg);
     }
 
     /**
@@ -135,15 +132,8 @@ class Response implements ResponseContract
         // 1. 没有定义错误码
         // 2. 可能是运行错误
         $error_code == '-1' && $error_code = '10000'; // 系统异常错误码
-
         $error_msg = $this->app->exception->getMessage($error_code); // 错误信息
-        $log = array(
-            'data' => $this->data,
-            'param' => $this->param,
-            'exception' => $this->exception,
-        );
 
-        $this->errorLogWrite($error_msg, $log);
         $this->setData(); // 异常处理不返回数据,只进行数据记录
         return $this->result($error_code, $error_msg);
     }
@@ -167,54 +157,27 @@ class Response implements ResponseContract
     }
 
     /**
-     * 错误日志记录
-     * @author HMoe9 <hmoe9@qq.com>
-     * @param string $error_msg
-     * @param $log
-     */
-    public function errorLogWrite(string $error_msg, $log): void
-    {
-        // var 内的 error_log 自定义变量,二维数组。
-        // 格式为: array(array('错误信息', '具体数据'), ...)
-        // error_log 不存在,直接记录错误日志。
-        // error_log 存在,并且是二维数组,进行批量记录。
-        if (empty($this->app->var->error_log))
-        {
-            $this->app->system_log->error_log($error_msg, $log);
-        }
-        elseif (is_array($this->app->var->error_log))
-        {
-            $this->app->var->error_log[] = array(
-                $error_msg, $log
-            );
-            $this->app->system_log->setBatchWrite();
-            foreach ($this->app->var->error_log as $value)
-            {
-                $this->app->system_log->error_log(...$value);
-            }
-            $this->app->system_log->batchWrite();
-        }
-    }
-
-    /**
-     * 操作成功响应
+     * 日志记录
      * @author HMoe9 <hmoe9@qq.com>
      * @param string $msg
-     * @return ThinkResponse
      */
-    protected function success(string $msg): ThinkResponse
+    public function logWrite(string $msg): void
     {
-        $result = array(
-            'time' => time(),
-            'code' => 0,
-            'msg'  => $msg,
-            'data' => $this->data,
-        );
-        return json($result, $this->http_code);
+        $var = $this->app->var;
+        $log = $this->app->system_log;
+
+        if (!empty($var->batch_log) &&
+            is_array($var->batch_log))
+        {
+            $log->setResponseSchemaField('batch_log', $var->batch_log);
+        }
+
+        $log_type = $this->log_type ? 'action_log' : 'error_log';
+        $log->{$log_type}($msg);
     }
 
     /**
-     * 操作失败响应
+     * 请求响应统一方法
      * @author HMoe9 <hmoe9@qq.com>
      * @param string $code
      * @param string $msg
@@ -222,12 +185,35 @@ class Response implements ResponseContract
      */
     protected function result(string $code, string $msg): ThinkResponse
     {
+        $this->inTransaction($this->log_type); // 事务操作
+
         $result = array(
             'time' => time(),
-            'code' => (int)$code,
+            'code' => intval($code),
             'msg'  => $msg,
             'data' => $this->data,
         );
-        return json($result, $this->http_code);
+        $response = $this->responseLogSchema($result);
+        $this->logWrite($msg);
+        return $response;
+    }
+
+    /**
+     * 响应数据日志格式化
+     * @author HMoe9 <hmoe9@qq.com>
+     * @param array $result
+     * @return ThinkResponse
+     */
+    protected function responseLogSchema(array $result): ThinkResponse
+    {
+        $response = json($result, $this->http_code);
+        $log_schema = array(
+            'header' => $response->getHeader(), // 响应头
+            'http_code' => $this->http_code, // http 状态码
+        );
+        empty($this->data) || $log_schema['data'] = $this->data; // 响应数据
+        empty($this->exception) || $log_schema['exception'] = $this->exception; // 异常数据
+        $this->app->system_log->setResponseSchema($log_schema);
+        return $response;
     }
 }

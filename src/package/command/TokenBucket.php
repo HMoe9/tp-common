@@ -23,7 +23,7 @@ class TokenBucket extends Command
 
     protected function configure()
     {
-        $this->setName('tp-common:token_bucket')
+        $this->setName('tp-common:token-bucket')
             ->addOption('key', null, Option::VALUE_REQUIRED, '', null)
             ->addOption('ms', null, Option::VALUE_REQUIRED, '', self::MS)
             ->addOption('num', null, Option::VALUE_REQUIRED, '', self::NUM)
