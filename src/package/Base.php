@@ -95,7 +95,7 @@ trait Base
      */
     public function __set($name, $value): void
     {
-        $this->app->var->$name = $value;
+        $this->app->var->{$name} = $value;
     }
 
     /**
@@ -106,7 +106,7 @@ trait Base
      */
     public function __get($name)
     {
-        return $this->app->var->$name;
+        return $this->app->var->{$name};
     }
 
     /**
@@ -117,7 +117,7 @@ trait Base
      */
     public function __isset($name): bool
     {
-        $value = $this->$name;
+        $value = $this->{$name};
 
         return !empty($value);
     }

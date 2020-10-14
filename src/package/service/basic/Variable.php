@@ -13,7 +13,7 @@ class Variable
 
     public function __set($name, $value)
     {
-        $this->$name = $value;
+        $this->{$name} = $value;
     }
 
     public function __get($name)
@@ -22,12 +22,12 @@ class Variable
         {
             return null;
         }
-        return $this->$name;
+        return $this->{$name};
     }
 
     public function __isset($name): bool
     {
-        $value = $this->$name;
+        $value = $this->{$name};
 
         return !empty($value);
     }

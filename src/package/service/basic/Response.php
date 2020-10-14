@@ -139,24 +139,6 @@ class Response implements ResponseContract
     }
 
     /**
-     * 事务提交/回滚操作
-     * @author HMoe9 <hmoe9@qq.com>
-     * @param bool $bool
-     */
-    public function inTransaction(bool $bool = true): void
-    {
-        // 检查是否在一个事务内,如果在事务内,抛出异常后回滚事务
-        $pdo = Db::getPdo();
-        if ($pdo !== false)
-        {
-            if ($pdo->inTransaction() === true)
-            {
-                $bool ? Db::commit() : Db::rollback();
-            }
-        }
-    }
-
-    /**
      * 日志记录
      * @author HMoe9 <hmoe9@qq.com>
      * @param string $msg
@@ -174,6 +156,24 @@ class Response implements ResponseContract
 
         $log_type = $this->log_type ? 'action_log' : 'error_log';
         $log->{$log_type}($msg);
+    }
+
+    /**
+     * 事务提交/回滚操作
+     * @author HMoe9 <hmoe9@qq.com>
+     * @param bool $bool
+     */
+    protected function inTransaction(bool $bool = true): void
+    {
+        // 检查是否在一个事务内,如果在事务内,抛出异常后回滚事务
+        $pdo = Db::getPdo();
+        if ($pdo !== false)
+        {
+            if ($pdo->inTransaction() === true)
+            {
+                $bool ? Db::commit() : Db::rollback();
+            }
+        }
     }
 
     /**

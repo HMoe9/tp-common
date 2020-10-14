@@ -5,22 +5,16 @@ namespace tp\common\package\service\basic;
 
 use tp\common\package\Base;
 use tp\common\package\contract\basic\LogContract;
-use tp\common\package\model\log\{
-    ActionLogModel,
-    ErrorLogModel
-};
 
 class Log implements LogContract
 {
     use Base;
 
     /**
-     * 日志记录模型
+     * 是否初始化标识
+     * @var bool
      */
-    protected const BIND_MODEL = array(
-        'action_log' => ActionLogModel::class, // 操作日志记录
-        'error_log' => ErrorLogModel::class, // 错误日志记录
-    );
+    protected $initialize = false;
 
     /**
      * 是否进行日志记录
@@ -72,20 +66,19 @@ class Log implements LogContract
         if ((!$this->app->runningInConsole()) &&
             (empty($this->log_write) ||
                 ($this->request->isGet() && $method == 'action_log') ||
-                empty($this->param)
+                empty($this->request->param())
             ))
         {
             return ;
         }
 
-        // #1.1--- 判断方法是否存在
-        if (!array_key_exists($method, self::BIND_MODEL))
+        // #1.1--- 判断方法是否存在,重复调用中断
+        if ($this->app->has("tp-common.{$method}") &&
+            !$this->initialize)
         {
-            exit('日志记录方法不存在: ' . $method);
+            // #1.2--- 日志记录
+            $this->write($method, $args);
         }
-
-        // #1.2--- 日志记录
-        $this->write($method, $args);
     }
 
     /**
@@ -96,6 +89,7 @@ class Log implements LogContract
      */
     public function write($method, $args): void
     {
+        $this->initialize = true;
         list($action) = $args;
 
         // 请求响应时间
@@ -111,33 +105,35 @@ class Log implements LogContract
             'response_time' => $response_time,
             'memory_usage' => $memory_usage,
         );
-        $this->logHandle($ins_data);
-        $model = self::BIND_MODEL[$method];
-        $model::create($ins_data);
+        $this->columnHandle($ins_data);
+        $this->app->make("tp-common.{$method}")->log($ins_data);
     }
 
     /**
-     * 处理日志数据
+     * 日志字段处理
      * @author HMoe9 <hmoe9@qq.com>
      * @param array $log
      */
-    protected function logHandle(array &$log): void
+    protected function columnHandle(array &$log): void
     {
-        $log['server'] = array_change_key_case($this->request->server());
-        $log['server'] = json_encode($log['server'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $log['request'] = array();
 
-        $log['request'] = array(
-            'param' => $this->request->param(),
-            'header' => $this->request->header(),
-        );
-
-        // 指定字段过滤,不记录日志
-        $filter_field = $this->app->config->get('tp-common.log_filter_field', []);
-        if (!empty($filter_field) && is_array($filter_field))
+        // 非命令行模式对请求参数做特殊处理
+        if (!$this->app->runningInConsole())
         {
-            foreach ($filter_field as $value)
+            $log['request'] = array(
+                'param' => $this->request->param(),
+                'header' => $this->request->header(),
+            );
+
+            // 指定字段过滤,不记录日志
+            $filter_field = $this->app->config->get('tp-common.log_filter_field', []);
+            if (!empty($filter_field) && is_array($filter_field))
             {
-                isset($log['request']['param'][$value]) && $log['request']['param'][$value] = '';
+                foreach ($filter_field as $value)
+                {
+                    isset($log['request']['param'][$value]) && $log['request']['param'][$value] = '';
+                }
             }
         }
         $log['request'] = json_encode($log['request'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

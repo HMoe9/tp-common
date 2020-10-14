@@ -28,7 +28,6 @@ tp-common
     │  
     └─package
         ├─ Base.php
-        ├─ Model.php
         ├─ Service.php
         │  
         ├─command
@@ -44,6 +43,9 @@ tp-common
         │          └─ success_jobs.stub
         │              
         ├─contract
+        │  ├─ DatabaseContract.php
+        │  ├─ JobContract.php
+        │  │  
         │  └─basic
         │      ├─ ExceptionContract.php
         │      ├─ LogContract.php
@@ -64,19 +66,11 @@ tp-common
         ├─middleware
         │     ├─ SignMiddleware.php 签名校验中间件
         │     └─ VerifyMiddleware.php 验证类中间件
-        │      
-        ├─model
-        │  ├─job
-        │  │  ├─ FailedJobsModel.php
-        │  │  └─ SuccessJobsModel.php
-        │  │      
-        │  └─log
-        │     ├─ ActionLogModel.php
-        │     └─ ErrorLogModel.php
-        │          
+        │        
         ├─service
         │  ├─ BloomFilter.php 布隆过滤器服务
         │  ├─ TokenBucket.php 令牌桶服务
+        │  ├─ Database.php 日志记录db类
         │  │  
         │  └─basic
         │      ├─ Exception.php 异常处理服务
@@ -93,13 +87,6 @@ tp-common
 ### tp-common 配置文件
 
 ```php
-use tp\common\package\model\{
-    job\FailedJobsModel,
-    job\SuccessJobsModel,
-    log\ActionLogModel,
-    log\ErrorLogModel
-};
-
 return array(
     'app_dev' => true, // 调试模式
     'app_dev_version' => '1.0', // 调试模式匹配参数
@@ -107,12 +94,12 @@ return array(
     'http_code' => 500, // 抛出异常时 http 状态码
 
     // 组件包使用的基础表
-    // 模型名 => 表名(不含前缀)
+    // stub 名 => 表名(不含前缀)
     'migrate_table' => array(
-        FailedJobsModel::class => 'failed_jobs',
-        SuccessJobsModel::class => 'success_jobs',
-        ActionLogModel::class => 'action_log',
-        ErrorLogModel::class => 'error_log',
+        'action_log' => 'common_action_log', // 请求日志
+        'error_log' => 'common_error_log', // 异常日志
+        'failed_jobs' => 'common_failed_jobs', // 失败队列日志
+        'success_jobs' => 'common_success_jobs', // 成功队列日志
     ),
 
     // 日志记录时,过滤请求参数中的字段

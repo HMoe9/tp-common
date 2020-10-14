@@ -1,9 +1,8 @@
 <?php
 
-use think\migration\db\Column;
 use think\migration\Migrator;
 
-class CreateFailedJobsTable extends Migrator
+class {{className}} extends Migrator
 {
     public function change()
     {

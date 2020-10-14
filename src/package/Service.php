@@ -19,6 +19,7 @@ use tp\common\package\command\{
     TokenBucket as TokenBucketCommand,
     migrate\MigrateTable
 };
+use tp\common\package\service\Database;
 
 class Service extends \think\Service
 {
@@ -39,7 +40,27 @@ class Service extends \think\Service
     // 服务注册
     public function register()
     {
+        $migrate_table = $this->app->config->get('tp-common.migrate_table', []);
+        $stubs_dir = glob(__DIR__ .'/command/migrate/stubs/*.stub');
+        foreach ($stubs_dir as $stubs_file)
+        {
+            $filename = pathinfo($stubs_file, PATHINFO_FILENAME);
+            if (!array_key_exists($filename, $migrate_table))
+            {
+                continue ;
+            }
 
+            // 获取自定义表名, 表名为空跳过
+            $table = str_replace(' ', '', $migrate_table[$filename]);
+            if (empty($table))
+            {
+                continue ;
+            }
+
+            $this->app->bind("tp-common.{$filename}", function () use ($table) {
+                return $this->app->invokeClass(Database::class, [$table]);
+            });
+        }
     }
 
     // 服务启动
@@ -82,7 +103,7 @@ class Service extends \think\Service
         if (isset($extend_list[$langSet]))
         {
             $this->app->lang->load($extend_list[$langSet]);
-            $this->app->var->$langSet = $extend_list[$langSet];
+            $this->app->var->{$langSet} = $extend_list[$langSet];
         }
     }
 }

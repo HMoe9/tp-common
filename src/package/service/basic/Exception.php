@@ -23,7 +23,7 @@ class Exception implements ExceptionContract
     protected function initialize(): void
     {
         $langSet = $this->app->lang->getLangSet();
-        $files = $this->app->var->$langSet;
+        $files = $this->app->var->{$langSet};
         foreach ($files as $file)
         {
             // 加载 package 内的语言包

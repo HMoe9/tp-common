@@ -30,23 +30,34 @@ class MigrateTable extends Command
         }
 
         $this->output->info('executing ...');
+
         $creator = $this->app->get('migration.creator');
-        foreach ($migrate_table as $table)
+        $stubs_dir = glob(__DIR__ . '/stubs/*.stub');
+        foreach ($stubs_dir as $stubs_file)
         {
-            $className = Str::studly("create_{$table}_table");
-            $stub_file = __DIR__ . "/stubs/{$table}.stub";
-            if (!file_exists($stub_file))
+            $filename = pathinfo($stubs_file, PATHINFO_FILENAME);
+            if (!array_key_exists($filename, $migrate_table))
             {
                 continue ;
             }
 
+            // 获取自定义表名, 表名为空跳过
+            $table = str_replace(' ', '', $migrate_table[$filename]);
+            if (empty($table))
+            {
+                continue ;
+            }
+
+            sleep(1);
+            $className = Str::studly("create_{$table}_table"); // 下划线转驼峰
             $path = $creator->create($className);
-            $contents = file_get_contents($stub_file);
+            $contents = file_get_contents($stubs_file);
             $contents = strtr($contents, [
+                '{{className}}' => $className,
                 '{{table}}' => $table,
             ]);
             file_put_contents($path, $contents);
-            sleep(1);
+            $this->output->info("{$className} created successfully!");
         }
 
         $this->output->info('Migration created successfully!');

@@ -4,10 +4,6 @@ declare(strict_types=1);
 namespace tp\common\package\job;
 
 use think\App;
-use tp\common\package\model\job\{
-    SuccessJobsModel,
-    FailedJobsModel
-};
 use Throwable;
 use think\db\exception\DbException;
 
@@ -30,15 +26,18 @@ class Base
      * 操作成功日志记录
      * @author HMoe9 <hmoe9@qq.com>
      */
-    public function success()
+    public function success(): void
     {
-        $ins_data = array(
-            'job_id' => $this->job->getJobId(),
-            'connection' => $this->job->getConnection(),
-            'queue' => $this->job->getQueue(),
-            'payload' => $this->job->getRawBody(),
-        );
-        SuccessJobsModel::create($ins_data);
+        if ($this->app->has("tp-common.success_jobs"))
+        {
+            $ins_data = array(
+                'job_id' => $this->job->getJobId(),
+                'connection' => $this->job->getConnection(),
+                'queue' => $this->job->getQueue(),
+                'payload' => $this->job->getRawBody(),
+            );
+            $this->app->make("tp-common.success_jobs")->log($ins_data);
+        }
     }
 
     /**
@@ -58,14 +57,16 @@ class Base
         $exception['File'] = $e->getFile();
         $exception['Line'] = $e->getLine();
 
-        $ins_data = array(
-            'connection' => $this->job->getConnection(),
-            'queue' => $this->job->getQueue(),
-            'payload' => $this->job->getRawBody(),
-            'exception' => json_encode($exception, JSON_UNESCAPED_UNICODE),
-        );
-        FailedJobsModel::create($ins_data);
-
+        if ($this->app->has("tp-common.failed_jobs"))
+        {
+            $ins_data = array(
+                'connection' => $this->job->getConnection(),
+                'queue' => $this->job->getQueue(),
+                'payload' => $this->job->getRawBody(),
+                'exception' => json_encode($exception, JSON_UNESCAPED_UNICODE),
+            );
+            $this->app->make("tp-common.failed_jobs")->log($ins_data);
+        }
         if (!empty($this->app->var->batch_log))
         {
             $this->app->response->LogWrite($exception['Exception']);
