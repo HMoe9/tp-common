@@ -3,41 +3,38 @@ declare (strict_types = 1);
 
 namespace tp\common\package;
 
-use tp\common\package\service\basic\{
-    Exception,
-    Response,
-    Log,
-    Redis,
-    Variable,
-    Hash
-};
-use tp\common\package\service\{
-    BloomFilter,
-    TokenBucket
-};
 use tp\common\package\command\{
     TokenBucket as TokenBucketCommand,
     migrate\MigrateTable
 };
-use tp\common\package\service\Database;
+use tp\common\package\service\{
+    basic\Entity,
+    basic\Exception,
+    basic\Response,
+    basic\Log,
+    basic\Redis,
+    basic\Variable,
+    basic\Hash,
+    BloomFilter,
+    TokenBucket,
+    Database
+};
 
 class Service extends \think\Service
 {
     public $bind = array(
-        // 系统核心服务注册
         'exception' => Exception::class,
         'response' => Response::class,
         'system_log' => Log::class,
         'redis' => Redis::class,
         'var' => Variable::class,
         'hash' => Hash::class,
+        'entity' => Entity::class,
 
-        // 自定义服务
         'bloom_filter' => BloomFilter::class,
         'token_bucket' => TokenBucket::class,
     );
 
-    // 服务注册
     public function register()
     {
         $migrate_table = $this->app->config->get('tp-common.migrate_table', []);
@@ -50,7 +47,7 @@ class Service extends \think\Service
                 continue ;
             }
 
-            // 获取自定义表名, 表名为空跳过
+            // 获取自定义表名
             $table = str_replace(' ', '', $migrate_table[$filename]);
             if (empty($table))
             {
@@ -63,10 +60,8 @@ class Service extends \think\Service
         }
     }
 
-    // 服务启动
     public function boot()
     {
-        // 注册命令行
         $this->commands([
             TokenBucketCommand::class,
             MigrateTable::class,

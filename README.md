@@ -68,17 +68,18 @@ tp-common
         │     └─ VerifyMiddleware.php 验证类中间件
         │        
         ├─service
-        │  ├─ BloomFilter.php 布隆过滤器服务
-        │  ├─ TokenBucket.php 令牌桶服务
-        │  ├─ Database.php 日志记录db类
+        │  ├─ BloomFilter.php 布隆过滤器
+        │  ├─ TokenBucket.php 令牌桶
+        │  ├─ Database.php 日志记录 db 类
         │  │  
         │  └─basic
-        │      ├─ Exception.php 异常处理服务
-        │      ├─ Hash.php 哈希函数服务
-        │      ├─ Log.php 日志记录服务
-        │      ├─ Redis.php Redis服务
-        │      ├─ Response.php 请求响应服务
-        │      └─ Variable.php 自定义变量服务
+        │      ├─ Entity.php 数据实体类
+        │      ├─ Exception.php 异常处理类
+        │      ├─ Hash.php 哈希函数类
+        │      ├─ Log.php 日志记录类
+        │      ├─ Redis.php Redis 类
+        │      ├─ Response.php 请求响应类
+        │      └─ Variable.php 自定义变量类
         │          
         └─validate
               └─ SignValidate.php 签名验证类
@@ -134,7 +135,6 @@ USERNAME = username
 PASSWORD = root
 HOSTPORT = password
 CHARSET = utf8
-DEBUG = true
 PREFIX = t_
 ~~~
 
@@ -299,13 +299,14 @@ return array(
 
 ~~~php
 use tp\common\package\job\Base;
+use tp\common\package\contract\JobContract;
 use think\queue\Job;
 use Exception;
 use Throwable;
 
-class TestJob extends Base
+class TestJob extends Base implements JobContract
 {
-    public function fire(Job $job, $data)
+    public function fire(Job $job, $data): void
     {
         $this->job = $job;
         try
@@ -323,7 +324,7 @@ class TestJob extends Base
         $job->delete();
     }
 
-    public function failed($data, Throwable $e)
+    public function failed($data, Throwable $e): void
     {
         $this->error($e);
     }
@@ -335,23 +336,24 @@ class TestJob extends Base
 
 ~~~php
 public $bind = array(
-    // 系统核心服务注册
     'exception' => Exception::class,
     'response' => Response::class,
     'system_log' => Log::class,
     'redis' => Redis::class,
     'var' => Variable::class,
     'hash' => Hash::class,
+    'entity' => Entity::class,
 
-    // 自定义服务
     'bloom_filter' => BloomFilter::class,
     'token_bucket' => TokenBucket::class,
 );
 
 // 服务的调用
+// 方式一
 app('服务名')->方法名();
 
-// 如果有 use tp\common\package\Base;
+// 方式二 
+// use tp\common\package\Base;
 $this->app->服务名->方法名();
 ~~~
 
@@ -365,6 +367,9 @@ public function index()
     );
 	app('response')->setData($data); // 响应的数据
 	return app('response')->ajaxReturn();
+    
+    // 支持链式操作
+    // return app('response')->setData($data)->ajaxReturn();
 }
 ~~~
 
@@ -406,11 +411,103 @@ public function index()
 ~~~PHP
 public function index()
 {
+    $value = strval('value');
 	app('bloom_filter')->setKey('prefix'); // 设置key
-	app('bloom_filter')->add(strval('value')); // 添加值到过滤器中
-	$bool = app('bloom_filter')->has(strval('value')); // 只会返回 true 或 false,判断值是否存在过滤器中
+	app('bloom_filter')->add($value); // 添加值到过滤器中
+	$bool = app('bloom_filter')->has($value); // 只会返回 true 或 false,判断值是否存在过滤器中
+    
+    // 支持链式操作
+    // $bool = app('bloom_filter')->setKey('prefix')
+    //     ->add($value)
+    //     ->has($value);
 }
 ~~~
+
+#### entity
+
+```php
+// model
+class OrderModel extends \think\Model
+{
+	protected $name = 'order'; // 表名
+	
+    // @Column: 当声明该标识时,说明属性是数据库中真实存在的字段。
+    // 访问修饰符为 private
+    /**
+     * @Column
+     */
+    private $price;
+    
+    private $order_item;
+    
+    // 创建对应的 getter 和 setter 方法
+    public function getPrice()
+    {
+        return $this->price;
+    }
+    
+    public function setPrice($price): void
+    {
+        $this->price = $price;
+    }
+
+    public function getOrderItem()
+    {
+        return $this->order_item;
+    }
+
+    public function setOrderItem($order_item): void
+    {
+        $this->order_item = $order_item;
+    }
+}
+
+class OrderGoodsModel extends \think\Model
+{
+	protected $name = 'order_goods';
+	
+    /**
+     * @Column
+     */
+    private $goods_id;
+    
+    public function getGoodsId()
+    {
+        return $this->goods_id;
+    }
+    
+    public function setGoodsId($goods_id): void
+    {
+        $this->goods_id = $goods_id;
+    }
+}
+
+// controller
+class IndexController
+{
+    public function index()
+    {
+        // 请求参数
+        // Content-type: application/json
+		// body:{
+        //     "price": 1,
+        //     "order_items": [{
+        //         "goods_id": 1
+        //     }, {
+        //         "goods_id": 2
+        //     }]
+        // }
+		$order_obj = app('entity')->jsonToObject(OrderModel::class); // 可直接获取到对应的模型实例
+        $order_obj->save();
+        
+        $order_goods_arr = app('entity')->mapToObject(OrderGoodsModel::class, $order_obj->getOrderItem());
+		foreach ($order_goods_arr as $order_goods_obj)
+        {
+            $order_goods_obj->save();
+        }
+    }
+}
+```
 
 ## 异常处理
 
@@ -423,7 +520,7 @@ public function index()
 use app\Request;
 use tp\common\package\exception\ExceptionHandle; // 组件包定义的异常处理
 
-// 容器Provider定义文件
+// 容器 Provider 定义文件
 return [
     'think\Request'          => Request::class,
     'think\exception\Handle' => ExceptionHandle::class,
@@ -453,10 +550,10 @@ return [
   无法使用语言包中定义的错误码。响应的 code 固定为 10000。错误信息可自定义。
 
   ~~~php
-    // 异常类 code 值默认为0。
-    // boolval($e->getcode()) 为 true 时记录日志。
-    throw new LogicException('TEST_ERROR_1', '1'); // 记录日志
-    throw new LogicException('自定义错误信息2'); // 不记录日志
+  // 异常类 code 值默认为0。
+  // boolval($e->getcode()) 为 true 时记录日志。
+  throw new LogicException('TEST_ERROR_1', '1'); // 记录日志
+  throw new LogicException('自定义错误信息2'); // 不记录日志
   ~~~
 
 * 使用 HttpExceptions 抛出异常时可记录自定义的信息,可指定 http 状态码

@@ -23,7 +23,7 @@ class MigrateTable extends Command
             return;
         }
 
-        $migrate_table = $this->app->config->get('tp-common.migrate_table', '');
+        $migrate_table = $this->app->config->get('tp-common.migrate_table', []);
         if (empty($migrate_table))
         {
             $this->output->error('The migration file does not exist');

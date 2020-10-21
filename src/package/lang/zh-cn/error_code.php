@@ -24,5 +24,6 @@ return array(
         'BLOOM_FILTER_FUNC_REQUIRE'       => '10017',
         'BLOOM_FILTER_FUNC_TOO_FEW'       => '10018',
         'TOKEN_BUCKET_KEY_REQUIRE'        => '10019',
+        'CLASS_NOT_EXISTS'                => '10020',
     ),
 );

@@ -39,7 +39,7 @@ class Database implements DatabaseContract
     {
         $exist = app('config')->get('tp-common.table_exist_verify', false);
         $instance = $exist ? $this->getTableExists() : $this->getTable();
-        $instance && $instance->insertGetId($data);
+        $instance && $instance->insert($data);
     }
 
     protected function getTable()

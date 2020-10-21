@@ -51,32 +51,38 @@ class BloomFilter
      * 设置过滤器的 key
      * @author HMoe9 <hmoe9@qq.com>
      * @param string $key
+     * @return $this
      */
-    public function setKey(string $key): void
+    public function setKey(string $key)
     {
         $this->key_sign = true;
         $this->key .= $key;
+        return $this;
     }
 
     /**
      * 设置哈希函数数组
      * @author HMoe9 <hmoe9@qq.com>
      * @param array $arr
+     * @return $this
      */
-    public function setHashFunc(array $arr): void
+    public function setHashFunc(array $arr)
     {
         $this->hash_func = $arr;
+        return $this;
     }
 
     /**
      * 添加值到指定集合中
      * @author HMoe9 <hmoe9@qq.com>
      * @param string $str
+     * @return $this
      */
-    public function add(string $str): void
+    public function add(string $str)
     {
         $this->action = __FUNCTION__;
         $this->operate($str);
+        return $this;
     }
 
     /**
