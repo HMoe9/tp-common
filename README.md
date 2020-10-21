@@ -13,7 +13,7 @@
 ### 组件安装
 
 ~~~
-$ composer require hmoe9/tp-commmon:dev-master
+$ composer require hmoe9/tp-commmon
 ~~~
 
 ### 目录结构
