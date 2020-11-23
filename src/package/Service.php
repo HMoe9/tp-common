@@ -19,13 +19,18 @@ use tp\common\package\service\{
     TokenBucket,
     Database
 };
+use tp\common\package\contract\basic\{
+    ExceptionContract,
+    LogContract,
+    ResponseContract
+};
 
 class Service extends \think\Service
 {
     public $bind = array(
-        'exception' => Exception::class,
-        'response' => Response::class,
-        'system_log' => Log::class,
+        'exception' => ExceptionContract::class,
+        'response' => ResponseContract::class,
+        'system_log' => LogContract::class,
         'redis' => Redis::class,
         'var' => Variable::class,
         'hash' => Hash::class,
@@ -35,8 +40,27 @@ class Service extends \think\Service
         'token_bucket' => TokenBucket::class,
     );
 
+    protected $contract = array(
+        ExceptionContract::class => Exception::class,
+        LogContract::class => Log::class,
+        ResponseContract::class => Response::class
+    );
+
     public function register()
     {
+        $bind = $this->app->config->get('tp-common.bind', []);
+        if (!empty($bind))
+        {
+            foreach ($this->contract as $key => $value)
+            {
+                if (array_key_exists($key, $bind) && class_exists($bind[$key]))
+                {
+                    $this->contract[$key] = $bind[$key];
+                }
+            }
+        }
+        $this->app->bind($this->contract);
+
         $migrate_table = $this->app->config->get('tp-common.migrate_table', []);
         $stubs_dir = glob(__DIR__ .'/command/migrate/stubs/*.stub');
         foreach ($stubs_dir as $stubs_file)

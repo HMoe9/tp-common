@@ -126,16 +126,16 @@ class Response implements ResponseContract
      */
     public function exceptionReturn(Throwable $e): ThinkResponse
     {
-        $error_code = $this->app->exception->getCode($e->getMessage()); // 错误码
+        $origin_error_code = $this->app->exception->getCode($e->getMessage()); // 错误码
 
         // 错误码为 -1 的时候有两种情况
         // 1. 没有定义错误码
         // 2. 可能是运行错误
-        $error_code == '-1' && $error_code = '10000'; // 系统异常错误码
+        $error_code = $origin_error_code == '-1' ? '10000' : $origin_error_code; // 系统异常错误码
         $error_msg = $this->app->exception->getMessage($error_code); // 错误信息
 
         $this->setData(); // 异常处理不返回数据,只进行数据记录
-        return $this->result($error_code, $error_msg);
+        return $this->result($origin_error_code, $error_msg);
     }
 
     /**
@@ -167,12 +167,9 @@ class Response implements ResponseContract
     {
         // 检查是否在一个事务内,如果在事务内,抛出异常后回滚事务
         $pdo = Db::getPdo();
-        if ($pdo !== false)
+        if ($pdo !== false && $pdo->inTransaction() === true)
         {
-            if ($pdo->inTransaction() === true)
-            {
-                $bool ? Db::commit() : Db::rollback();
-            }
+            $bool ? Db::commit() : Db::rollback();
         }
     }
 

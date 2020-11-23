@@ -88,6 +88,17 @@ tp-common
 ### tp-common 配置文件
 
 ```php
+use tp\common\package\contract\basic\{
+    ExceptionContract,
+    LogContract,
+    ResponseContract
+};
+use tp\common\package\service\basic\{
+    Exception,
+    Log,
+    Response
+};
+
 return array(
     'app_dev' => true, // 调试模式
     'app_dev_version' => '1.0', // 调试模式匹配参数
@@ -106,6 +117,13 @@ return array(
         'error_log' => 'common_error_log', // 异常日志
         'failed_jobs' => 'common_failed_jobs', // 失败队列日志
         'success_jobs' => 'common_success_jobs', // 成功队列日志
+    ),
+
+    // 可重写方法的服务类
+    'bind' => array(
+        ExceptionContract::class => Exception::class,
+        LogContract::class => Log::class,
+        ResponseContract::class => Response::class,
     ),
 
     // 日志记录时,过滤请求参数中的字段
@@ -336,9 +354,9 @@ class TestJob extends Base implements JobContract
 
 ~~~php
 public $bind = array(
-    'exception' => Exception::class,
-    'response' => Response::class,
-    'system_log' => Log::class,
+    'exception' => ExceptionContract::class,
+    'response' => ResponseContract::class,
+    'system_log' => LogContract::class,
     'redis' => Redis::class,
     'var' => Variable::class,
     'hash' => Hash::class,
@@ -365,8 +383,8 @@ public function index()
     $data = array(
     	'key' => 'value',
     );
-	app('response')->setData($data); // 响应的数据
-	return app('response')->ajaxReturn();
+    app('response')->setData($data); // 响应的数据
+    return app('response')->ajaxReturn();
     
     // 支持链式操作
     // return app('response')->setData($data)->ajaxReturn();
@@ -389,10 +407,10 @@ SELECT = 0
 ~~~php
 public function index()
 {
-	$key = 'key';
-	$value = 'value';
-	app('redis')->set($key, $value);
-	echo app('redis')->get($key);
+    $key = 'key';
+    $value = 'value';
+    app('redis')->set($key, $value);
+    echo app('redis')->get($key);
 }
 ~~~
 
@@ -401,8 +419,8 @@ public function index()
 ~~~php
 public function index()
 {
-	app('var')->key = 123;
-	echo app('var')->key;
+    app('var')->key = 123;
+    echo app('var')->key;
 }
 ~~~
 
@@ -412,9 +430,9 @@ public function index()
 public function index()
 {
     $value = strval('value');
-	app('bloom_filter')->setKey('prefix'); // 设置key
-	app('bloom_filter')->add($value); // 添加值到过滤器中
-	$bool = app('bloom_filter')->has($value); // 只会返回 true 或 false,判断值是否存在过滤器中
+    app('bloom_filter')->setKey('prefix'); // 设置key
+    app('bloom_filter')->add($value); // 添加值到过滤器中
+    $bool = app('bloom_filter')->has($value); // 只会返回 true 或 false,判断值是否存在过滤器中
     
     // 支持链式操作
     // $bool = app('bloom_filter')->setKey('prefix')
@@ -429,7 +447,7 @@ public function index()
 // model
 class OrderModel extends \think\Model
 {
-	protected $name = 'order'; // 表名
+    protected $name = 'order'; // 表名
 	
     // @Column: 当声明该标识时,说明属性是数据库中真实存在的字段。
     // 访问修饰符为 private
@@ -464,7 +482,7 @@ class OrderModel extends \think\Model
 
 class OrderGoodsModel extends \think\Model
 {
-	protected $name = 'order_goods';
+    protected $name = 'order_goods';
 	
     /**
      * @Column
@@ -497,7 +515,7 @@ class IndexController
         //         "goods_id": 2
         //     }]
         // }
-		$order_obj = app('entity')->jsonToObject(OrderModel::class); // 可直接获取到对应的模型实例
+        $order_obj = app('entity')->jsonToObject(OrderModel::class); // 可直接获取到对应的模型实例
         $order_obj->save();
         
         $order_goods_arr = app('entity')->mapToObject(OrderGoodsModel::class, $order_obj->getOrderItem());
@@ -508,6 +526,36 @@ class IndexController
     }
 }
 ```
+
+### 重写服务
+
+```php
+// 步骤一:
+// 重写方法
+namespace app\index\service;
+
+use tp\common\package\service\basic\Response\ResponseService;
+// use tp\common\package\contract\basic\ResponseContract;
+
+// 方法一: 继承组件提供的服务类重写、新增方法
+// 方法二: 继承组件提供的接口类,重写方法
+class Response extends ResponseService // implements ResponseContract
+{
+    public function index()
+    {
+        echo 123;
+    }
+}
+
+// 步骤二:
+// 替换 tp-common.php 中的 bind 数组
+'bind' => array(
+    // ...
+    ResponseContract::class => \app\index\service\Response::class,
+),
+```
+
+
 
 ## 异常处理
 
@@ -564,7 +612,7 @@ return [
   use tp\common\package\exception\HttpExceptions;
   
   $param = array(
-  	'key' => 'custom',
+      'key' => 'custom',
   );
   throw new HttpExceptions('TEST_ERROR_1', $param, 200);
   ~~~

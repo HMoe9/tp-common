@@ -4,7 +4,7 @@ declare (strict_types = 1);
 namespace tp\common\package\service\basic;
 
 use tp\common\package\Base;
-use RuntimeException;
+use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -31,7 +31,7 @@ class Entity
         {
             return $this->instances[$name];
         }
-        throw new RuntimeException('CLASS_NOT_EXISTS');
+        throw new InvalidArgumentException('CLASS_NOT_EXISTS');
     }
 
     public function jsonToObject(string $class, array $param = array(), bool $newInstance = false)

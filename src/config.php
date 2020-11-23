@@ -1,5 +1,16 @@
 <?php
 
+use tp\common\package\contract\basic\{
+    ExceptionContract,
+    LogContract,
+    ResponseContract
+};
+use tp\common\package\service\basic\{
+    Exception,
+    Log,
+    Response
+};
+
 return array(
     'app_dev' => true, // 调试模式
     'app_dev_version' => '1.0', // 调试模式匹配参数
@@ -18,6 +29,13 @@ return array(
         'error_log' => 'common_error_log', // 异常日志
         'failed_jobs' => 'common_failed_jobs', // 失败队列日志
         'success_jobs' => 'common_success_jobs', // 成功队列日志
+    ),
+
+    // 可重写的服务类
+    'bind' => array(
+        ExceptionContract::class => Exception::class,
+        LogContract::class => Log::class,
+        ResponseContract::class => Response::class,
     ),
 
     // 日志记录时,过滤请求参数中的字段
