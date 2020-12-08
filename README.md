@@ -20,9 +20,6 @@ $ composer require hmoe9/tp-commmon
 
 ~~~
 tp-common
-├─ data	
-│  └─ database.sql 数据库初始化语句
-│      
 └─ src
     ├─ config.php 配置文件
     │  
@@ -346,6 +343,7 @@ class TestJob extends Base implements JobContract
     {
         $this->error($e);
     }
+}
 ~~~
 
 ## 服务 
