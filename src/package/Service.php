@@ -22,7 +22,8 @@ use tp\common\package\service\{
 use tp\common\package\contract\basic\{
     ExceptionContract,
     LogContract,
-    ResponseContract
+    ResponseContract,
+    RedisContract
 };
 
 class Service extends \think\Service
@@ -31,7 +32,7 @@ class Service extends \think\Service
         'exception' => ExceptionContract::class,
         'response' => ResponseContract::class,
         'system_log' => LogContract::class,
-        'redis' => Redis::class,
+        'redis' => RedisContract::class,
         'var' => Variable::class,
         'hash' => Hash::class,
         'entity' => Entity::class,
@@ -43,7 +44,8 @@ class Service extends \think\Service
     protected $contract = array(
         ExceptionContract::class => Exception::class,
         LogContract::class => Log::class,
-        ResponseContract::class => Response::class
+        ResponseContract::class => Response::class,
+        RedisContract::class => Redis::class,
     );
 
     public function register()
@@ -93,7 +95,7 @@ class Service extends \think\Service
 
         // 加载全局变量
         // #1--- 判断当前是否处于调试模式
-        $this->app->var->isDebug = false;
+        $isDebug = false;
         if (($this->app->isDebug()) ||
             ($this->app->config->get('tp-common.app_dev', 0) == 1 &&
                 $this->app->config->get('tp-common.app_dev_version', 0) == $this->app->request->param('dev_version')))
@@ -102,8 +104,9 @@ class Service extends \think\Service
             {
                 $this->app->debug(); // 启用调试模式
             }
-            $this->app->var->isDebug = true;
+            $isDebug = true;
         }
+        $this->app->var->isDebug = $isDebug;
 
         // #1.1--- 加载扩展 (自定义) 语言包
         $extend_list = array();

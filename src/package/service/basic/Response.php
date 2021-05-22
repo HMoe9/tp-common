@@ -43,9 +43,9 @@ class Response implements ResponseContract
      * 设置 http 状态码
      * @author HMoe9 <hmoe9@qq.com>
      * @param int $http_code
-     * @return $this
+     * @return Response
      */
-    public function setHttpCode(int $http_code)
+    public function setHttpCode(int $http_code): self
     {
         $this->http_code = $http_code;
         return $this;
@@ -55,9 +55,9 @@ class Response implements ResponseContract
      * 设置返回的 data 内容
      * @author HMoe9 <hmoe9@qq.com>
      * @param array $data
-     * @return $this
+     * @return Response
      */
-    public function setData($data = array())
+    public function setData($data = array()): self
     {
         $this->data = $data;
         return $this;
@@ -68,9 +68,9 @@ class Response implements ResponseContract
      * @author HMoe9 <hmoe9@qq.com>
      * @param string $key
      * @param $value
-     * @return $this
+     * @return Response
      */
-    public function setException(string $key, $value)
+    public function setException(string $key, $value): self
     {
         $this->exception[$key] = $value;
         return $this;
@@ -146,14 +146,10 @@ class Response implements ResponseContract
     public function logWrite(string $msg): void
     {
         $var = $this->app->var;
+
+        /** @var Log $log */
         $log = $this->app->system_log;
-
-        if (!empty($var->batch_log) &&
-            is_array($var->batch_log))
-        {
-            $log->setResponseSchemaField('batch_log', $var->batch_log);
-        }
-
+        $log->setResponseSchemaField('batch_log', $var->batch_log);
         $log_type = $this->log_type ? 'action_log' : 'error_log';
         $log->{$log_type}($msg);
     }

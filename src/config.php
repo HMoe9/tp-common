@@ -3,12 +3,14 @@
 use tp\common\package\contract\basic\{
     ExceptionContract,
     LogContract,
-    ResponseContract
+    ResponseContract,
+    RedisContract
 };
 use tp\common\package\service\basic\{
     Exception,
     Log,
-    Response
+    Response,
+    Redis
 };
 
 return array(
@@ -31,11 +33,18 @@ return array(
         'success_jobs' => 'common_success_jobs', // 成功队列日志
     ),
 
-    // 可重写的服务类
+    // 可重写方法的服务类
     'bind' => array(
         ExceptionContract::class => Exception::class,
         LogContract::class => Log::class,
         ResponseContract::class => Response::class,
+        RedisContract::class => Redis::class,
+    ),
+
+    // redis 配置
+    'redis' => array(
+        'lock_key' => 'lock', // 锁的名称
+        'expire_time' => 3, // 超时时间,单位(秒)
     ),
 
     // 日志记录时,过滤请求参数中的字段

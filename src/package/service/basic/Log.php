@@ -52,11 +52,11 @@ class Log implements LogContract
      * 设置响应日志结构字段
      * @author HMoe9 <hmoe9@qq.com>
      * @param string $key
-     * @param array $value
+     * @param array|null $value
      */
-    public function setResponseSchemaField(string $key, array $value): void
+    public function setResponseSchemaField(string $key, ?array $value): void
     {
-        $this->response_schema[$key] = $value;
+        $this->response_schema[$key] = $value ?? [];
     }
 
     public function __call($method, $args): void
@@ -124,6 +124,7 @@ class Log implements LogContract
             $log['request'] = array(
                 'param' => $this->request->param(),
                 'header' => $this->request->header(),
+                'method' => $this->request->method(),
             );
 
             // 指定字段过滤,不记录日志
@@ -137,7 +138,6 @@ class Log implements LogContract
             }
         }
         $log['request'] = json_encode($log['request'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
         $log['response'] = json_encode($this->response_schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 }
